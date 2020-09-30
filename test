@@ -1,0 +1,2 @@
+123
+pscp.exe -r  .\* 10.0.1.99:/home/docker/

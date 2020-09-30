@@ -1,0 +1,23 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: kube-node-cron
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: "Forbid"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          volumes:
+          - name: logs-storage
+            persistentVolumeClaim:
+              claimName: go-test-pvc
+          restartPolicy: Never
+          containers:
+          - name: kube-node-cron
+            image: nvovap/wb_node_cron:v1
+            command: ["npm",  "start"]
+            volumeMounts:
+              - mountPath: "/usr/src/app/logs"
+                name: logs-storage

@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: kube-node
+  name: kube-node
+spec:
+  progressDeadlineSeconds: 2147483647
+  replicas: 3
+  revisionHistoryLimit: 2147483647
+  selector:
+    matchLabels:
+      app: kube-node
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: kube-node
+    spec:
+      containers:
+      - env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.podIP
+        - name: LOG_LEVEL
+          value: PRODUCTION
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: DB_HOST
+              name: go-config
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: DB_PORT
+              name: go-config
+        - name: DB_USER
+          valueFrom:
+            configMapKeyRef:
+              key: DB_USER
+              name: go-config
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: dbpass
+        image:  nvovap/wb_node:v10
+        imagePullPolicy: IfNotPresent
+        name: kube-node
+        ports:
+        - containerPort: 4000
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /usr/src/app/logs
+          name: logs-storage
+      dnsPolicy: ClusterFirst
+      initContainers:
+        - command:
+          - npm
+          - start
+          env:
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          image: nvovap/wb_node_init:v1
+          imagePullPolicy: IfNotPresent
+          name: kube-node-init
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /usr/src/app/logs
+            name: logs-storage
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: logs-storage
+        persistentVolumeClaim:
+          claimName: go-test-pvc
+status: {}

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-node-svc
+  namespace: default
+spec:
+  selector:
+    app: kube-node
+  ports:
+  - port: 80
+    targetPort: 4000
+    protocol: TCP
